@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../config/theme.dart';
-import '../providers/auth_provider.dart';
+import '../config/constants.dart';
+import '../controllers/auth_controller.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,7 +16,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  String _role = 'member';
+  String _role = AppConstants.roleMember;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
@@ -30,7 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
 
     try {
       final response = await auth.register(
@@ -127,9 +128,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         prefixIcon: Icon(Icons.badge_outlined),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'member', child: Text('Member')),
-                        DropdownMenuItem(value: 'receptionist', child: Text('Receptionist')),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                        DropdownMenuItem(value: AppConstants.roleMember, child: Text('Member')),
+                        DropdownMenuItem(value: AppConstants.roleReceptionist, child: Text('Receptionist')),
+                        DropdownMenuItem(value: AppConstants.roleAdmin, child: Text('Admin')),
                       ],
                       onChanged: (v) => setState(() => _role = v!),
                     ),
@@ -189,13 +190,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _register,
-                        child: const Text('CREATE ACCOUNT'),
-                      ),
+                    GetBuilder<AuthController>(
+                      builder: (auth) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: auth.isLoading ? null : _register,
+                            child: auth.isLoading
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: AppTheme.primaryDark,
+                                    ),
+                                  )
+                                : const Text('CREATE ACCOUNT'),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextButton(

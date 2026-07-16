@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/dashboard_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/dashboard_controller.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -16,7 +16,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DashboardProvider>().loadDashboard(context.read<AuthProvider>());
+      Get.find<DashboardController>().loadDashboard(Get.find<AuthController>());
     });
   }
 
@@ -28,12 +28,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_outlined),
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: () => Get.find<AuthController>().logout(),
           ),
         ],
       ),
-      body: Consumer<DashboardProvider>(
-        builder: (context, dashboard, _) {
+      body: GetBuilder<DashboardController>(
+        builder: (dashboard) {
           if (dashboard.isLoading) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
           }
@@ -54,9 +54,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: const Icon(Icons.error_outline, color: AppTheme.error, size: 40),
                     ),
                     const SizedBox(height: 20),
-                    Text(
+                    const Text(
                       'Something went wrong',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -66,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: () => dashboard.loadDashboard(context.read<AuthProvider>()),
+                      onPressed: () => dashboard.loadDashboard(Get.find<AuthController>()),
                       icon: const Icon(Icons.refresh, size: 18),
                       label: const Text('Retry'),
                     ),
@@ -80,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (data == null) return const SizedBox();
 
           return RefreshIndicator(
-            onRefresh: () => dashboard.loadDashboard(context.read<AuthProvider>()),
+            onRefresh: () => dashboard.loadDashboard(Get.find<AuthController>()),
             color: AppTheme.accentTeal,
             child: ListView(
               padding: const EdgeInsets.all(20),
@@ -151,7 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Members checked in right now',
-                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                             ),
                           ],
                         ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/attendance_provider.dart';
-import '../../providers/payment_provider.dart';
-import '../../providers/member_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/attendance_controller.dart';
+import '../../controllers/payment_controller.dart';
+import '../../controllers/member_controller.dart';
 
 class MemberShell extends StatefulWidget {
   const MemberShell({super.key});
@@ -23,13 +23,13 @@ class _MemberShellState extends State<MemberShell> {
   }
 
   void _loadData() {
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
     final memberId = auth.memberId;
     if (memberId == null) return;
 
-    context.read<AttendanceProvider>().loadAttendance(auth, memberId: memberId);
-    context.read<PaymentProvider>().loadPayments(auth, memberId: memberId);
-    context.read<MemberProvider>().loadMembers(auth, refresh: true);
+    Get.find<AttendanceController>().loadAttendance(auth, memberId: memberId);
+    Get.find<PaymentController>().loadPayments(auth, memberId: memberId);
+    Get.find<MemberController>().loadMembers(auth, refresh: true);
   }
 
   @override
@@ -87,101 +87,105 @@ class _MemberShellState extends State<MemberShell> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_outlined),
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: () => Get.find<AuthController>().logout(),
           ),
         ],
       ),
-      body: Consumer2<AuthProvider, AttendanceProvider>(
-        builder: (context, auth, attendance, _) {
-          final myRecords = attendance.records;
-          final isCheckedIn = myRecords.any((r) => r.checkOut == null);
-          final totalCheckIns = myRecords.length;
+      body: GetBuilder<AuthController>(
+        builder: (auth) {
+          return GetBuilder<AttendanceController>(
+            builder: (attendance) {
+              final myRecords = attendance.records;
+              final isCheckedIn = myRecords.any((r) => r.checkOut == null);
+              final totalCheckIns = myRecords.length;
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Container(
+              return ListView(
                 padding: const EdgeInsets.all(20),
-                decoration: AppTheme.glassCard,
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppTheme.accentTeal.withAlpha(15),
-                      child: Text(
-                        (auth.memberName ?? 'U').substring(0, 1).toUpperCase(),
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.accentTeal),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(auth.memberName ?? 'Member', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 4),
-                          Text(auth.user?.username ?? '', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
                 children: [
-                  Expanded(
-                    child: _QuickStat(
-                      icon: Icons.login_rounded,
-                      label: 'My Check-ins',
-                      value: '$totalCheckIns',
-                      color: AppTheme.accentTeal,
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: AppTheme.glassCard,
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppTheme.accentTeal.withAlpha(15),
+                          child: Text(
+                            (auth.memberName ?? 'U').substring(0, 1).toUpperCase(),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppTheme.accentTeal),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(auth.memberName ?? 'Member', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              Text(auth.user?.username ?? '', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _QuickStat(
-                      icon: Icons.circle,
-                      label: isCheckedIn ? 'Checked In' : 'Not Checked In',
-                      value: isCheckedIn ? 'YES' : 'NO',
-                      color: isCheckedIn ? AppTheme.success : AppTheme.textMuted,
-                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _QuickStat(
+                          icon: Icons.login_rounded,
+                          label: 'My Check-ins',
+                          value: '$totalCheckIns',
+                          color: AppTheme.accentTeal,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _QuickStat(
+                          icon: Icons.circle,
+                          label: isCheckedIn ? 'Checked In' : 'Not Checked In',
+                          value: isCheckedIn ? 'YES' : 'NO',
+                          color: isCheckedIn ? AppTheme.success : AppTheme.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ActionCard(
+                          icon: Icons.login_rounded,
+                          label: isCheckedIn ? 'Already In' : 'Check In',
+                          color: isCheckedIn ? AppTheme.textMuted : AppTheme.success,
+                          onTap: isCheckedIn ? null : () => _checkIn(),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: _ActionCard(
+                          icon: Icons.logout_rounded,
+                          label: isCheckedIn ? 'Check Out' : 'Not In Gym',
+                          color: isCheckedIn ? AppTheme.accentPink : AppTheme.textMuted,
+                          onTap: isCheckedIn ? () => _checkOut() : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  _ActionCard(
+                    icon: Icons.card_membership_rounded,
+                    label: 'My Membership Status',
+                    color: AppTheme.accentYellow,
+                    onTap: () => _showMembershipStatus(),
+                    wide: true,
                   ),
                 ],
-              ),
-              const SizedBox(height: 28),
-              const Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.login_rounded,
-                      label: isCheckedIn ? 'Already In' : 'Check In',
-                      color: isCheckedIn ? AppTheme.textMuted : AppTheme.success,
-                      onTap: isCheckedIn ? null : () => _checkIn(),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _ActionCard(
-                      icon: Icons.logout_rounded,
-                      label: isCheckedIn ? 'Check Out' : 'Not In Gym',
-                      color: isCheckedIn ? AppTheme.accentPink : AppTheme.textMuted,
-                      onTap: isCheckedIn ? () => _checkOut() : null,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _ActionCard(
-                icon: Icons.card_membership_rounded,
-                label: 'My Membership Status',
-                color: AppTheme.accentYellow,
-                onTap: () => _showMembershipStatus(),
-                wide: true,
-              ),
-            ],
+              );
+            },
           );
         },
       ),
@@ -191,8 +195,8 @@ class _MemberShellState extends State<MemberShell> {
   Widget _buildAttendance() {
     return Scaffold(
       appBar: AppBar(title: const Text('My Attendance')),
-      body: Consumer<AttendanceProvider>(
-        builder: (context, provider, _) {
+      body: GetBuilder<AttendanceController>(
+        builder: (provider) {
           if (provider.isLoading && provider.records.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
           }
@@ -255,8 +259,8 @@ class _MemberShellState extends State<MemberShell> {
   Widget _buildPayments() {
     return Scaffold(
       appBar: AppBar(title: const Text('My Payments')),
-      body: Consumer<PaymentProvider>(
-        builder: (context, provider, _) {
+      body: GetBuilder<PaymentController>(
+        builder: (provider) {
           if (provider.isLoading && provider.payments.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
           }
@@ -325,12 +329,12 @@ class _MemberShellState extends State<MemberShell> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_outlined),
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: () => Get.find<AuthController>().logout(),
           ),
         ],
       ),
-      body: Consumer<AuthProvider>(
-        builder: (context, auth, _) {
+      body: GetBuilder<AuthController>(
+        builder: (auth) {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -393,7 +397,7 @@ class _MemberShellState extends State<MemberShell> {
   }
 
   Future<void> _checkIn() async {
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
     final memberId = auth.memberId;
     if (memberId == null) {
       if (mounted) {
@@ -403,7 +407,7 @@ class _MemberShellState extends State<MemberShell> {
       }
       return;
     }
-    final error = await context.read<AttendanceProvider>().checkIn(auth, memberId);
+    final error = await Get.find<AttendanceController>().checkIn(auth, memberId);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -415,7 +419,7 @@ class _MemberShellState extends State<MemberShell> {
   }
 
   Future<void> _checkOut() async {
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
     final memberId = auth.memberId;
     if (memberId == null) {
       if (mounted) {
@@ -425,7 +429,7 @@ class _MemberShellState extends State<MemberShell> {
       }
       return;
     }
-    final error = await context.read<AttendanceProvider>().checkOut(auth, memberId);
+    final error = await Get.find<AttendanceController>().checkOut(auth, memberId);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -437,7 +441,7 @@ class _MemberShellState extends State<MemberShell> {
   }
 
   void _showMembershipStatus() {
-    final payments = context.read<PaymentProvider>().payments;
+    final payments = Get.find<PaymentController>().payments;
 
     if (payments.isEmpty) {
       showDialog(
@@ -547,28 +551,44 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDisabled = onTap == null;
+    final Color effectiveColor = isDisabled ? AppTheme.textMuted : color;
+
     return GestureDetector(
       onTap: onTap,
-      child: Opacity(
-        opacity: onTap != null ? 1.0 : 0.4,
-        child: Container(
-          padding: EdgeInsets.all(wide ? 20 : 18),
-          decoration: AppTheme.glassCard,
-          child: Row(
-            mainAxisAlignment: wide ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              if (wide) const SizedBox(width: 14),
-              if (wide) Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-            ],
+      child: Container(
+        padding: EdgeInsets.all(wide ? 20 : 18),
+        decoration: BoxDecoration(
+          color: isDisabled
+              ? AppTheme.surfaceDark.withAlpha(100)
+              : AppTheme.cardDark.withAlpha(200),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDisabled ? AppTheme.divider.withAlpha(80) : AppTheme.divider,
+            width: 0.5,
           ),
+        ),
+        child: Row(
+          mainAxisAlignment: wide ? MainAxisAlignment.start : MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: effectiveColor.withAlpha(isDisabled ? 10 : 15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: effectiveColor, size: 22),
+            ),
+            if (wide) const SizedBox(width: 14),
+            if (wide) Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: isDisabled ? AppTheme.textMuted : AppTheme.textPrimary,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../models/payment.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/member_provider.dart';
-import '../../providers/membership_provider.dart';
-import '../../providers/payment_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/member_controller.dart';
+import '../../controllers/membership_controller.dart';
+import '../../controllers/payment_controller.dart';
 
 class PaymentRecordScreen extends StatefulWidget {
   const PaymentRecordScreen({super.key});
@@ -28,10 +28,10 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
   }
 
   void _loadData() {
-    final auth = context.read<AuthProvider>();
-    context.read<MemberProvider>().loadMembers(auth, refresh: true);
-    context.read<MembershipProvider>().loadMemberships(auth);
-    context.read<PaymentProvider>().loadPayments(auth, refresh: true);
+    final auth = Get.find<AuthController>();
+    Get.find<MemberController>().loadMembers(auth, refresh: true);
+    Get.find<MembershipController>().loadMemberships(auth);
+    Get.find<PaymentController>().loadPayments(auth, refresh: true);
   }
 
   @override
@@ -73,10 +73,10 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                    Consumer<MemberProvider>(
-                      builder: (context, memberProv, _) {
-                        return DropdownButtonFormField<int>(
-                          initialValue: _selectedMemberId,
+                  GetBuilder<MemberController>(
+                    builder: (memberProv) {
+                      return DropdownButtonFormField<int>(
+                        value: _selectedMemberId,
                         isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Member', prefixIcon: Icon(Icons.person_outline_rounded)),
                         items: memberProv.members.map((m) => DropdownMenuItem(
@@ -88,10 +88,10 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
                     },
                   ),
                   const SizedBox(height: 14),
-                    Consumer<MembershipProvider>(
-                      builder: (context, memProv, _) {
-                        return DropdownButtonFormField<int>(
-                          initialValue: _selectedMembershipId,
+                  GetBuilder<MembershipController>(
+                    builder: (memProv) {
+                      return DropdownButtonFormField<int>(
+                        value: _selectedMembershipId,
                         isExpanded: true,
                         decoration: const InputDecoration(labelText: 'Membership Plan', prefixIcon: Icon(Icons.card_membership_rounded)),
                         items: memProv.memberships.map((m) => DropdownMenuItem(
@@ -149,8 +149,8 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
           ),
           const SizedBox(height: 10),
           Expanded(
-            child: Consumer<PaymentProvider>(
-              builder: (context, paymentProvider, _) {
+            child: GetBuilder<PaymentController>(
+              builder: (paymentProvider) {
                 if (paymentProvider.isLoading && paymentProvider.payments.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
                 }
@@ -252,8 +252,8 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
       return;
     }
 
-    final result = await context.read<PaymentProvider>().createPayment(
-      context.read<AuthProvider>(),
+    final result = await Get.find<PaymentController>().createPayment(
+      Get.find<AuthController>(),
       {
         'member_id': _selectedMemberId,
         'membership_id': _selectedMembershipId,
@@ -281,8 +281,8 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
   }
 
   Future<void> _showReceipt(Payment payment) async {
-    final receipt = await context.read<PaymentProvider>().getReceipt(
-      context.read<AuthProvider>(),
+    final receipt = await Get.find<PaymentController>().getReceipt(
+      Get.find<AuthController>(),
       payment.paymentId,
     );
 
@@ -394,8 +394,8 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
                       return;
                     }
 
-                    final success = await context.read<PaymentProvider>().updatePayment(
-                      context.read<AuthProvider>(),
+                    final success = await Get.find<PaymentController>().updatePayment(
+                      Get.find<AuthController>(),
                       payment.paymentId,
                       {
                         'amount': amount,
@@ -436,8 +436,8 @@ class _PaymentRecordScreenState extends State<PaymentRecordScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final success = await context.read<PaymentProvider>().deletePayment(
-                context.read<AuthProvider>(),
+              final success = await Get.find<PaymentController>().deletePayment(
+                Get.find<AuthController>(),
                 payment.paymentId,
               );
               if (mounted) {

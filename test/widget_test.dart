@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:gym_app/main.dart';
-import 'package:gym_app/providers/auth_provider.dart';
+import 'package:gym_app/controllers/auth_controller.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    final authProvider = AuthProvider();
-    await tester.pumpWidget(MyApp(authProvider: authProvider));
+    Get.put(AuthController());
+    await tester.pumpWidget(const MyApp());
     await tester.pump();
     expect(find.text('GYM MANAGEMENT'), findsOneWidget);
   });

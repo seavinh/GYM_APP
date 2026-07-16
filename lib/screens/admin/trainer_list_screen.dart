@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/trainer_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/trainer_controller.dart';
 
 class TrainerListScreen extends StatefulWidget {
   const TrainerListScreen({super.key});
@@ -17,7 +17,7 @@ class _TrainerListScreenState extends State<TrainerListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<TrainerProvider>().loadTrainers(context.read<AuthProvider>());
+    Get.find<TrainerController>().loadTrainers(Get.find<AuthController>());
   }
 
   @override
@@ -38,20 +38,20 @@ class _TrainerListScreenState extends State<TrainerListScreen> {
                         icon: const Icon(Icons.clear_rounded, size: 18),
                         onPressed: () {
                           _searchController.clear();
-                          context.read<TrainerProvider>().loadTrainers(context.read<AuthProvider>());
+                          Get.find<TrainerController>().loadTrainers(Get.find<AuthController>());
                         },
                       )
                     : null,
               ),
               onChanged: (v) => setState(() {}),
               onSubmitted: (v) {
-                context.read<TrainerProvider>().loadTrainers(context.read<AuthProvider>(), search: v);
+                Get.find<TrainerController>().loadTrainers(Get.find<AuthController>(), search: v);
               },
             ),
           ),
           Expanded(
-            child: Consumer<TrainerProvider>(
-              builder: (context, trainerProvider, _) {
+            child: GetBuilder<TrainerController>(
+              builder: (trainerProvider) {
                 if (trainerProvider.isLoading && trainerProvider.trainers.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
                 }
@@ -193,8 +193,8 @@ class _TrainerListScreenState extends State<TrainerListScreen> {
                     'specialty': specialtyController.text.trim().isEmpty ? null : specialtyController.text.trim(),
                   };
 
-                  final auth = context.read<AuthProvider>();
-                  final provider = context.read<TrainerProvider>();
+                  final auth = Get.find<AuthController>();
+                  final provider = Get.find<TrainerController>();
 
                   if (trainer != null) {
                     await provider.updateTrainer(auth, trainer.trainerId, data);
@@ -225,8 +225,8 @@ class _TrainerListScreenState extends State<TrainerListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<TrainerProvider>().deleteTrainer(
-                context.read<AuthProvider>(),
+              await Get.find<TrainerController>().deleteTrainer(
+                Get.find<AuthController>(),
                 trainer.trainerId,
               );
             },

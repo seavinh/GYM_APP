@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/member_provider.dart';
-import '../../providers/attendance_provider.dart';
+import '../../config/constants.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/member_controller.dart';
+import '../../controllers/attendance_controller.dart';
 
 class ReceptionistShell extends StatefulWidget {
   const ReceptionistShell({super.key});
@@ -21,10 +22,10 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = context.read<AuthProvider>();
-      context.read<MemberProvider>().loadMembers(auth, refresh: true);
-      context.read<AttendanceProvider>().loadTodayReport(auth);
-      context.read<AttendanceProvider>().loadActiveAttendance(auth);
+      final auth = Get.find<AuthController>();
+      Get.find<MemberController>().loadMembers(auth, refresh: true);
+      Get.find<AttendanceController>().loadTodayReport(auth);
+      Get.find<AttendanceController>().loadActiveAttendance(auth);
     });
   }
 
@@ -34,10 +35,10 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
     super.dispose();
   }
 
-  void _onSearchChanged(String value, AuthProvider auth) {
+  void _onSearchChanged(String value, AuthController auth) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
-      context.read<MemberProvider>().loadMembers(auth, search: value.isEmpty ? null : value, refresh: true);
+      Get.find<MemberController>().loadMembers(auth, search: value.isEmpty ? null : value, refresh: true);
     });
   }
 
@@ -50,15 +51,15 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
-              final auth = context.read<AuthProvider>();
-              context.read<MemberProvider>().loadMembers(auth, refresh: true);
-              context.read<AttendanceProvider>().loadTodayReport(auth);
-              context.read<AttendanceProvider>().loadActiveAttendance(auth);
+              final auth = Get.find<AuthController>();
+              Get.find<MemberController>().loadMembers(auth, refresh: true);
+              Get.find<AttendanceController>().loadTodayReport(auth);
+              Get.find<AttendanceController>().loadActiveAttendance(auth);
             },
           ),
           IconButton(
             icon: const Icon(Icons.logout_outlined),
-            onPressed: () => context.read<AuthProvider>().logout(),
+            onPressed: () => Get.find<AuthController>().logout(),
           ),
         ],
       ),
@@ -91,8 +92,8 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
   }
 
   Widget _buildQuickActions() {
-    return Consumer<AttendanceProvider>(
-      builder: (context, attendance, _) {
+    return GetBuilder<AttendanceController>(
+      builder: (attendance) {
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -156,106 +157,110 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
   }
 
   Widget _buildCheckInCheckOut() {
-    return Consumer2<MemberProvider, AttendanceProvider>(
-      builder: (context, memberProvider, attendanceProvider, _) {
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: TextField(
-                decoration: const InputDecoration(
-                  hintText: 'Search member by name...',
-                  prefixIcon: Icon(Icons.search_rounded, size: 20),
+    return GetBuilder<MemberController>(
+      builder: (memberProvider) {
+        return GetBuilder<AttendanceController>(
+          builder: (attendanceProvider) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search member by name...',
+                      prefixIcon: Icon(Icons.search_rounded, size: 20),
+                    ),
+                    onChanged: (v) => _onSearchChanged(v, Get.find<AuthController>()),
+                  ),
                 ),
-                onChanged: (v) => _onSearchChanged(v, context.read<AuthProvider>()),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                itemCount: memberProvider.members.length,
-                itemBuilder: (context, index) {
-                  final member = memberProvider.members[index];
-                  final isActive = attendanceProvider.activeMemberIds.contains(member.memberId);
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: AppTheme.glassCard,
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(14),
-                      leading: CircleAvatar(
-                        radius: 22,
-                        backgroundColor: isActive ? AppTheme.success.withAlpha(15) : AppTheme.accentTeal.withAlpha(15),
-                        child: Text(
-                          member.fullName.substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            color: isActive ? AppTheme.success : AppTheme.accentTeal,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    itemCount: memberProvider.members.length,
+                    itemBuilder: (context, index) {
+                      final member = memberProvider.members[index];
+                      final isActive = attendanceProvider.activeMemberIds.contains(member.memberId);
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: AppTheme.glassCard,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(14),
+                          leading: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: isActive ? AppTheme.success.withAlpha(15) : AppTheme.accentTeal.withAlpha(15),
+                            child: Text(
+                              member.fullName.substring(0, 1).toUpperCase(),
+                              style: TextStyle(
+                                color: isActive ? AppTheme.success : AppTheme.accentTeal,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                              ),
+                              if (isActive)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.success.withAlpha(15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text('ACTIVE', style: TextStyle(color: AppTheme.success, fontSize: 10, fontWeight: FontWeight.w700)),
+                                ),
+                            ],
+                          ),
+                          subtitle: Text(member.email, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.login_rounded, color: AppTheme.success, size: 22),
+                                onPressed: isActive ? null : () async {
+                                  final error = await attendanceProvider.checkIn(Get.find<AuthController>(), member.memberId);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(error ?? 'Check-in successful'),
+                                        backgroundColor: error != null ? AppTheme.error : AppTheme.success,
+                                      ),
+                                    );
+                                    if (error == null) {
+                                      attendanceProvider.loadActiveAttendance(Get.find<AuthController>());
+                                    }
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.logout_rounded, color: isActive ? AppTheme.accentPink : AppTheme.textMuted, size: 22),
+                                onPressed: isActive ? () async {
+                                  final error = await attendanceProvider.checkOut(Get.find<AuthController>(), member.memberId);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(error ?? 'Check-out successful'),
+                                        backgroundColor: error != null ? AppTheme.error : AppTheme.success,
+                                      ),
+                                    );
+                                    if (error == null) {
+                                      attendanceProvider.loadActiveAttendance(Get.find<AuthController>());
+                                    }
+                                  }
+                                } : null,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      title: Row(
-                        children: [
-                          Expanded(
-                            child: Text(member.fullName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                          ),
-                          if (isActive)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppTheme.success.withAlpha(15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text('ACTIVE', style: TextStyle(color: AppTheme.success, fontSize: 10, fontWeight: FontWeight.w700)),
-                            ),
-                        ],
-                      ),
-                      subtitle: Text(member.email, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.login_rounded, color: AppTheme.success, size: 22),
-                            onPressed: isActive ? null : () async {
-                              final error = await attendanceProvider.checkIn(context.read<AuthProvider>(), member.memberId);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(error ?? 'Check-in successful'),
-                                    backgroundColor: error != null ? AppTheme.error : AppTheme.success,
-                                  ),
-                                );
-                                if (error == null) {
-                                  attendanceProvider.loadActiveAttendance(context.read<AuthProvider>());
-                                }
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.logout_rounded, color: isActive ? AppTheme.accentPink : AppTheme.textMuted, size: 22),
-                            onPressed: isActive ? () async {
-                              final error = await attendanceProvider.checkOut(context.read<AuthProvider>(), member.memberId);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(error ?? 'Check-out successful'),
-                                    backgroundColor: error != null ? AppTheme.error : AppTheme.success,
-                                  ),
-                                );
-                                if (error == null) {
-                                  attendanceProvider.loadActiveAttendance(context.read<AuthProvider>());
-                                }
-                              }
-                            } : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
         );
       },
     );
@@ -291,13 +296,13 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
           TextButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && phoneController.text.isNotEmpty && emailController.text.isNotEmpty) {
-                await context.read<MemberProvider>().createMember(
-                  context.read<AuthProvider>(),
+                await Get.find<MemberController>().createMember(
+                  Get.find<AuthController>(),
                   {
                     'full_name': nameController.text.trim(),
                     'phone': phoneController.text.trim(),
                     'email': emailController.text.trim(),
-                    'gender': 'male',
+                    'gender': AppConstants.genderMale,
                     'dob': '2000-01-01',
                     'join_date': DateTime.now().toIso8601String().substring(0, 10),
                   },
@@ -313,7 +318,7 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
   }
 
   void _showCheckInDialog() async {
-    final members = context.read<MemberProvider>().members;
+    final members = Get.find<MemberController>().members;
     if (members.isEmpty) return;
 
     final selected = await showDialog<int>(
@@ -338,8 +343,8 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
     );
 
     if (selected != null && mounted) {
-      final auth = context.read<AuthProvider>();
-      final attendanceProvider = context.read<AttendanceProvider>();
+      final auth = Get.find<AuthController>();
+      final attendanceProvider = Get.find<AttendanceController>();
       final error = await attendanceProvider.checkIn(auth, selected);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -353,8 +358,8 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
   }
 
   void _showCheckOutDialog() async {
-    final attendanceProvider = context.read<AttendanceProvider>();
-    final auth = context.read<AuthProvider>();
+    final attendanceProvider = Get.find<AttendanceController>();
+    final auth = Get.find<AuthController>();
     await attendanceProvider.loadActiveAttendance(auth);
 
     final activeIds = attendanceProvider.activeMemberIds;
@@ -367,7 +372,7 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
       return;
     }
 
-    final members = context.read<MemberProvider>().members.where((m) => activeIds.contains(m.memberId)).toList();
+    final members = Get.find<MemberController>().members.where((m) => activeIds.contains(m.memberId)).toList();
     if (members.isEmpty) return;
 
     final selected = await showDialog<int>(
@@ -426,8 +431,8 @@ class _ReceptionistShellState extends State<ReceptionistShell> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<MemberProvider>().loadMembers(
-                context.read<AuthProvider>(),
+              Get.find<MemberController>().loadMembers(
+                Get.find<AuthController>(),
                 search: controller.text,
                 refresh: true,
               );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/attendance_provider.dart';
-import '../../providers/member_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/attendance_controller.dart';
+import '../../controllers/member_controller.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -18,10 +18,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = context.read<AuthProvider>();
-    context.read<MemberProvider>().loadMembers(auth, refresh: true);
-    context.read<AttendanceProvider>().loadAttendance(auth, date: _formatDate(_selectedDate));
-    context.read<AttendanceProvider>().loadTodayReport(auth);
+    final auth = Get.find<AuthController>();
+    Get.find<MemberController>().loadMembers(auth, refresh: true);
+    Get.find<AttendanceController>().loadAttendance(auth, date: _formatDate(_selectedDate));
+    Get.find<AttendanceController>().loadTodayReport(auth);
   }
 
   String _formatDate(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -32,8 +32,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       appBar: AppBar(title: const Text('Attendance')),
       body: Column(
         children: [
-          Consumer<AttendanceProvider>(
-            builder: (context, provider, _) {
+          GetBuilder<AttendanceController>(
+            builder: (provider) {
               return Container(
                 margin: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                 padding: const EdgeInsets.all(20),
@@ -79,8 +79,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     );
                     if (date != null) {
                       setState(() => _selectedDate = date);
-                      context.read<AttendanceProvider>().loadAttendance(
-                        context.read<AuthProvider>(),
+                      Get.find<AttendanceController>().loadAttendance(
+                        Get.find<AuthController>(),
                         date: _formatDate(date),
                       );
                     }
@@ -91,8 +91,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: Consumer<AttendanceProvider>(
-              builder: (context, provider, _) {
+            child: GetBuilder<AttendanceController>(
+              builder: (provider) {
                 if (provider.isLoading) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
                 }
@@ -190,7 +190,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   void _showCheckInDialog() async {
-    final members = context.read<MemberProvider>().members;
+    final members = Get.find<MemberController>().members;
     if (members.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No members available'), backgroundColor: AppTheme.error),
@@ -220,8 +220,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
 
     if (selected != null && mounted) {
-      final auth = context.read<AuthProvider>();
-      final provider = context.read<AttendanceProvider>();
+      final auth = Get.find<AuthController>();
+      final provider = Get.find<AttendanceController>();
       final error = await provider.checkIn(auth, selected);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -244,8 +244,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _checkOut(int memberId) async {
-    final auth = context.read<AuthProvider>();
-    final provider = context.read<AttendanceProvider>();
+    final auth = Get.find<AuthController>();
+    final provider = Get.find<AttendanceController>();
     final error = await provider.checkOut(auth, memberId);
     if (mounted) {
       if (error != null) {

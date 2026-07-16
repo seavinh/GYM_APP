@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/membership_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/membership_controller.dart';
 
 class PlanListScreen extends StatefulWidget {
   const PlanListScreen({super.key});
@@ -15,15 +15,15 @@ class _PlanListScreenState extends State<PlanListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<MembershipProvider>().loadMemberships(context.read<AuthProvider>());
+    Get.find<MembershipController>().loadMemberships(Get.find<AuthController>());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Membership Plans')),
-      body: Consumer<MembershipProvider>(
-        builder: (context, provider, _) {
+      body: GetBuilder<MembershipController>(
+        builder: (provider) {
           if (provider.isLoading && provider.memberships.isEmpty) {
             return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
           }
@@ -173,8 +173,8 @@ class _PlanListScreenState extends State<PlanListScreen> {
                     'price': double.tryParse(priceController.text) ?? 0,
                   };
 
-                  final auth = context.read<AuthProvider>();
-                  final provider = context.read<MembershipProvider>();
+                  final auth = Get.find<AuthController>();
+                  final provider = Get.find<MembershipController>();
 
                   if (plan != null) {
                     await provider.updateMembership(auth, plan.membershipId, data);
@@ -205,8 +205,8 @@ class _PlanListScreenState extends State<PlanListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<MembershipProvider>().deleteMembership(
-                context.read<AuthProvider>(),
+              await Get.find<MembershipController>().deleteMembership(
+                Get.find<AuthController>(),
                 plan.membershipId,
               );
             },

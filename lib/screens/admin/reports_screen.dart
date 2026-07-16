@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../config/api_config.dart';
-import '../../providers/auth_provider.dart';
-import 'package:provider/provider.dart';
+import '../../controllers/auth_controller.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -34,7 +34,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       _error = null;
     });
 
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
     final headers = auth.headers;
 
     try {

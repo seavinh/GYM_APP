@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/member_provider.dart';
+import '../../config/constants.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/member_controller.dart';
 import 'member_form_screen.dart';
 
 class MemberListScreen extends StatefulWidget {
@@ -23,8 +24,8 @@ class _MemberListScreenState extends State<MemberListScreen> {
   }
 
   void _loadMembers() {
-    context.read<MemberProvider>().loadMembers(
-      context.read<AuthProvider>(),
+    Get.find<MemberController>().loadMembers(
+      Get.find<AuthController>(),
       search: _searchQuery.isEmpty ? null : _searchQuery,
       refresh: true,
     );
@@ -69,8 +70,8 @@ class _MemberListScreenState extends State<MemberListScreen> {
             ),
           ),
           Expanded(
-            child: Consumer<MemberProvider>(
-              builder: (context, memberProvider, _) {
+            child: GetBuilder<MemberController>(
+              builder: (memberProvider) {
                 if (memberProvider.isLoading && memberProvider.members.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
                 }
@@ -100,9 +101,9 @@ class _MemberListScreenState extends State<MemberListScreen> {
                   itemCount: memberProvider.members.length,
                   itemBuilder: (context, index) {
                     final member = memberProvider.members[index];
-                    final roleColor = member.role == 'admin'
+                    final roleColor = member.role == AppConstants.roleAdmin
                         ? AppTheme.accentPink
-                        : member.role == 'receptionist'
+                        : member.role == AppConstants.roleReceptionist
                             ? AppTheme.accentYellow
                             : AppTheme.accentTeal;
 
@@ -188,8 +189,8 @@ class _MemberListScreenState extends State<MemberListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<MemberProvider>().deleteMember(
-                context.read<AuthProvider>(),
+              await Get.find<MemberController>().deleteMember(
+                Get.find<AuthController>(),
                 member.memberId,
               );
             },

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/equipment_provider.dart';
+import '../../config/constants.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/equipment_controller.dart';
 
 class EquipmentListScreen extends StatefulWidget {
   const EquipmentListScreen({super.key});
@@ -18,7 +19,7 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<EquipmentProvider>().loadEquipment(context.read<AuthProvider>());
+    Get.find<EquipmentController>().loadEquipment(Get.find<AuthController>());
   }
 
   @override
@@ -49,15 +50,15 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {});
-                                context.read<EquipmentProvider>().loadEquipment(context.read<AuthProvider>());
+                                Get.find<EquipmentController>().loadEquipment(Get.find<AuthController>());
                               },
                             )
                           : null,
                     ),
                     onChanged: (v) => setState(() {}),
                     onSubmitted: (v) {
-                      context.read<EquipmentProvider>().loadEquipment(
-                        context.read<AuthProvider>(),
+                      Get.find<EquipmentController>().loadEquipment(
+                        Get.find<AuthController>(),
                         search: v,
                         status: _statusFilter.isEmpty ? null : _statusFilter,
                       );
@@ -79,14 +80,14 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
                       hint: const Icon(Icons.filter_list_rounded, color: AppTheme.textMuted, size: 20),
                       items: const [
                         DropdownMenuItem(value: '', child: Text('All')),
-                        DropdownMenuItem(value: 'available', child: Text('Available')),
-                        DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-                        DropdownMenuItem(value: 'retired', child: Text('Retired')),
+                        DropdownMenuItem(value: AppConstants.statusAvailable, child: Text('Available')),
+                        DropdownMenuItem(value: AppConstants.statusMaintenance, child: Text('Maintenance')),
+                        DropdownMenuItem(value: AppConstants.statusRetired, child: Text('Retired')),
                       ],
                       onChanged: (v) {
                         setState(() => _statusFilter = v ?? '');
-                        context.read<EquipmentProvider>().loadEquipment(
-                          context.read<AuthProvider>(),
+                        Get.find<EquipmentController>().loadEquipment(
+                          Get.find<AuthController>(),
                           search: _searchController.text,
                           status: _statusFilter.isEmpty ? null : _statusFilter,
                         );
@@ -98,8 +99,8 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
             ),
           ),
           Expanded(
-            child: Consumer<EquipmentProvider>(
-              builder: (context, provider, _) {
+            child: GetBuilder<EquipmentController>(
+              builder: (provider) {
                 if (provider.isLoading && provider.equipment.isEmpty) {
                   return const Center(child: CircularProgressIndicator(color: AppTheme.accentTeal));
                 }
@@ -192,9 +193,9 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'available': return AppTheme.success;
-      case 'maintenance': return AppTheme.accentYellow;
-      case 'retired': return AppTheme.error;
+      case AppConstants.statusAvailable: return AppTheme.success;
+      case AppConstants.statusMaintenance: return AppTheme.accentYellow;
+      case AppConstants.statusRetired: return AppTheme.error;
       default: return AppTheme.textSecondary;
     }
   }
@@ -203,7 +204,7 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
     final nameController = TextEditingController(text: item?.name ?? '');
     final typeController = TextEditingController(text: item?.type ?? '');
     final quantityController = TextEditingController(text: item?.quantity.toString() ?? '');
-    String status = item?.status ?? 'available';
+    String status = item?.status ?? AppConstants.statusAvailable;
     final purchaseDateController = TextEditingController(
       text: item?.purchaseDate != null
           ? '${item.purchaseDate.year}-${item.purchaseDate.month.toString().padLeft(2, '0')}-${item.purchaseDate.day.toString().padLeft(2, '0')}'
@@ -248,9 +249,9 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
                 initialValue: status,
                 decoration: const InputDecoration(labelText: 'Status', prefixIcon: Icon(Icons.info_outline_rounded)),
                 items: const [
-                  DropdownMenuItem(value: 'available', child: Text('Available')),
-                  DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-                  DropdownMenuItem(value: 'retired', child: Text('Retired')),
+                  DropdownMenuItem(value: AppConstants.statusAvailable, child: Text('Available')),
+                  DropdownMenuItem(value: AppConstants.statusMaintenance, child: Text('Maintenance')),
+                  DropdownMenuItem(value: AppConstants.statusRetired, child: Text('Retired')),
                 ],
                 onChanged: (v) => setSheetState(() => status = v!),
               ),
@@ -284,8 +285,8 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
                       'purchase_date': purchaseDateController.text.isEmpty ? null : purchaseDateController.text,
                     };
 
-                    final auth = context.read<AuthProvider>();
-                    final provider = context.read<EquipmentProvider>();
+                    final auth = Get.find<AuthController>();
+                    final provider = Get.find<EquipmentController>();
 
                     if (item != null) {
                       await provider.updateEquipment(auth, item.equipmentId, data);
@@ -317,8 +318,8 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await context.read<EquipmentProvider>().deleteEquipment(
-                context.read<AuthProvider>(),
+              await Get.find<EquipmentController>().deleteEquipment(
+                Get.find<AuthController>(),
                 item.equipmentId,
               );
             },

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
+import '../../config/constants.dart';
 import '../../models/member.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/member_provider.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/member_controller.dart';
 
 class MemberFormScreen extends StatefulWidget {
   final Member? member;
@@ -21,11 +22,11 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
-  String _gender = 'male';
+  String _gender = AppConstants.genderMale;
   DateTime _dob = DateTime(2000, 1, 1);
   DateTime _joinDate = DateTime.now();
   bool _createUserAccount = false;
-  String _role = 'member';
+  String _role = AppConstants.roleMember;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
 
@@ -110,8 +111,8 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
       data['role'] = _role;
     }
 
-    final auth = context.read<AuthProvider>();
-    final memberProvider = context.read<MemberProvider>();
+    final auth = Get.find<AuthController>();
+    final memberProvider = Get.find<MemberController>();
 
     bool success;
     if (widget.member != null) {
@@ -185,9 +186,9 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                     initialValue: _gender,
                     decoration: const InputDecoration(labelText: 'Gender', prefixIcon: Icon(Icons.wc_outlined)),
                     items: const [
-                      DropdownMenuItem(value: 'male', child: Text('Male')),
-                      DropdownMenuItem(value: 'female', child: Text('Female')),
-                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                      DropdownMenuItem(value: AppConstants.genderMale, child: Text('Male')),
+                      DropdownMenuItem(value: AppConstants.genderFemale, child: Text('Female')),
+                      DropdownMenuItem(value: AppConstants.genderOther, child: Text('Other')),
                     ],
                     onChanged: (v) => setState(() => _gender = v!),
                   ),
@@ -264,9 +265,9 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                         initialValue: _role,
                         decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.badge_outlined)),
                         items: const [
-                          DropdownMenuItem(value: 'member', child: Text('Member')),
-                          DropdownMenuItem(value: 'receptionist', child: Text('Receptionist')),
-                          DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                          DropdownMenuItem(value: AppConstants.roleMember, child: Text('Member')),
+                          DropdownMenuItem(value: AppConstants.roleReceptionist, child: Text('Receptionist')),
+                          DropdownMenuItem(value: AppConstants.roleAdmin, child: Text('Admin')),
                         ],
                         onChanged: (v) => setState(() => _role = v!),
                       ),
@@ -295,9 +296,9 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                       initialValue: _role,
                       decoration: const InputDecoration(labelText: 'Role', prefixIcon: Icon(Icons.admin_panel_settings_outlined)),
                       items: const [
-                        DropdownMenuItem(value: 'member', child: Text('Member')),
-                        DropdownMenuItem(value: 'receptionist', child: Text('Receptionist')),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                        DropdownMenuItem(value: AppConstants.roleMember, child: Text('Member')),
+                        DropdownMenuItem(value: AppConstants.roleReceptionist, child: Text('Receptionist')),
+                        DropdownMenuItem(value: AppConstants.roleAdmin, child: Text('Admin')),
                       ],
                       onChanged: (v) => setState(() => _role = v!),
                     ),

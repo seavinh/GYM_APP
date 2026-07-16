@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../config/theme.dart';
-import '../providers/auth_provider.dart';
+import '../controllers/auth_controller.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthProvider>();
+    final auth = Get.find<AuthController>();
     final error = await auth.login(
       _usernameController.text.trim(),
       _passwordController.text,
@@ -120,8 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: (v) => v == null || v.isEmpty ? 'Password required' : null,
                     ),
                     const SizedBox(height: 28),
-                    Consumer<AuthProvider>(
-                      builder: (context, auth, _) {
+                    GetBuilder<AuthController>(
+                      builder: (auth) {
                         return SizedBox(
                           width: double.infinity,
                           height: 52,
